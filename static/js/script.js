@@ -496,9 +496,14 @@ class ChatApp {
         this.clearBtn = document.getElementById('clearChat');
         this.imageBtn = document.getElementById('imageBtn');
         this.micBtn = document.getElementById('micBtn'); // New Mic Button
+        this.attachImageBtn = document.getElementById('attachImageBtn'); // Image attach button
+        this.attachImageInput = document.getElementById('attachImageInput'); // File input
         this.welcomeScreen = document.getElementById('welcomeScreen');
         this.languageSelector = document.getElementById('languageSelector');
         this.toggleSpeechBtn = document.getElementById('toggleSpeech');
+
+        // Store attached image
+        this.attachedImage = null;
 
         // Initialize text-to-speech
         this.tts = new TextToSpeech();
@@ -539,6 +544,20 @@ class ChatApp {
         // Image generation - ACTIVE
         this.imageBtn.addEventListener('click', () => this.openImageGenerationModal());
 
+        // Image attachment for questions
+        if (this.attachImageBtn && this.attachImageInput) {
+            this.attachImageBtn.addEventListener('click', () => {
+                this.attachImageInput.click();
+            });
+
+            this.attachImageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    this.handleImageAttachment(file);
+                }
+            });
+        }
+
         // Language selector
         this.languageSelector.addEventListener('change', (e) => {
             this.tts.setLanguage(e.target.value);
@@ -568,9 +587,74 @@ class ChatApp {
         });
     }
 
+    // Handle image attachment
+    handleImageAttachment(file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size should be less than 5MB');
+            return;
+        }
+
+        // Read image as base64
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.attachedImage = {
+                data: e.target.result,
+                name: file.name
+            };
+
+            // Show preview indicator
+            this.showImagePreview(e.target.result, file.name);
+
+            // Change attach button color to indicate image attached
+            this.attachImageBtn.style.color = '#22c55e';
+            this.attachImageBtn.title = `Image attached: ${file.name}`;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Show image preview
+    showImagePreview(imageData, fileName) {
+        // Remove existing preview
+        const existingPreview = document.querySelector('.image-preview-indicator');
+        if (existingPreview) existingPreview.remove();
+
+        // Create preview indicator
+        const preview = document.createElement('div');
+        preview.className = 'image-preview-indicator';
+        preview.innerHTML = `
+            <img src="${imageData}" alt="${fileName}" style="max-width: 60px; max-height: 60px; border-radius: 8px; object-fit: cover;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 8px;">${fileName}</span>
+            <button class="remove-image-btn" style="margin-left: auto; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">×</button>
+        `;
+        preview.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 8px;';
+
+        // Insert before input wrapper
+        const inputContainer = document.querySelector('.input-container');
+        const inputWrapper = document.querySelector('.input-wrapper');
+        inputContainer.insertBefore(preview, inputWrapper);
+
+        // Remove image button
+        preview.querySelector('.remove-image-btn').addEventListener('click', () => {
+            this.attachedImage = null;
+            preview.remove();
+            this.attachImageBtn.style.color = '';
+            this.attachImageBtn.title = 'Attach image to solve questions';
+            this.attachImageInput.value = '';
+        });
+    }
+
     async sendMessage() {
         const message = this.userInput.value.trim();
-        if (!message) return;
+
+        // Check if there's a message or attached image
+        if (!message && !this.attachedImage) return;
 
         // Hide welcome screen
         if (this.welcomeScreen) {
@@ -578,7 +662,21 @@ class ChatApp {
         }
 
         // Add user message
-        this.addMessage(message, 'user');
+        this.addMessage(message || 'Analyze this image', 'user');
+
+        // If image is attached, show it in chat
+        if (this.attachedImage) {
+            const imagePreview = document.createElement('div');
+            imagePreview.className = 'message user-message';
+            imagePreview.innerHTML = `
+                <div class="message-content">
+                    <img src="${this.attachedImage.data}" alt="${this.attachedImage.name}" 
+                         style="max-width: 300px; border-radius: var(--radius-md); margin-top: var(--spacing-sm);">
+                </div>
+            `;
+            this.messagesContainer.appendChild(imagePreview);
+            this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        }
 
         // Clear input
         this.userInput.value = '';
@@ -591,13 +689,23 @@ class ChatApp {
         const loadingId = this.addLoadingMessage();
 
         try {
+            // Prepare request body
+            const requestBody = {
+                message: message || 'What is in this image? Describe it in detail.'
+            };
+
+            // Add image if attached
+            if (this.attachedImage) {
+                requestBody.image = this.attachedImage.data;
+            }
+
             // Send to API
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ message })
+                body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
@@ -610,6 +718,16 @@ class ChatApp {
                 await this.addMessageWithTyping(data.response, 'assistant');
             } else {
                 this.addMessage(`Error: ${data.error}`, 'assistant');
+            }
+
+            // Clear attached image after sending
+            if (this.attachedImage) {
+                this.attachedImage = null;
+                const preview = document.querySelector('.image-preview-indicator');
+                if (preview) preview.remove();
+                this.attachImageBtn.style.color = '';
+                this.attachImageBtn.title = 'Attach image to solve questions';
+                this.attachImageInput.value = '';
             }
         } catch (error) {
             this.removeMessage(loadingId);
@@ -726,33 +844,69 @@ class ChatApp {
     }
 
     formatMessage(text) {
-        const codeBlocks = new Map();
+        let formatted = text;
 
-        // 1. Extract code blocks with improved regex (flexible whitespace)
-        text = text.replace(/```(\w*)\s*([\s\S]*?)```/g, (match, lang, code) => {
+        // 0. Escape HTML (safety first)
+        formatted = formatted.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        // 1. Extract Code Blocks (Placeholder)
+        const codeBlocks = new Map();
+        formatted = formatted.replace(/```(\w*)\s*([\s\S]*?)```/g, (match, lang, code) => {
             const id = `CODEBLOCK_${Math.random().toString(36).substr(2, 9)}`;
             codeBlocks.set(id, { lang: lang || 'plaintext', code: code });
             return id;
         });
 
-        // 2. Process inline code
-        text = text.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+        // 2. Bold Text (**text**)
+        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-        // 3. Process newlines (safely since code blocks are hidden)
-        text = text.replace(/\n/g, '<br>');
+        // 3. Headers (### Header)
+        formatted = formatted.replace(/^#{3}\s+(.*$)/gm, '<h3>$1</h3>');
+        formatted = formatted.replace(/^#{2}\s+(.*$)/gm, '<h2>$1</h2>');
+        formatted = formatted.replace(/^#{1}\s+(.*$)/gm, '<h1>$1</h1>');
 
-        // 4. Wrap in paragraph if needed
-        if (!text.includes('<')) {
-            text = `<p>${text}</p>`;
-        }
+        // 4. Unordered Lists (* or -)
+        // Match a block of lines starting with - or *
+        formatted = formatted.replace(/^(?:[\*\-]\s+.*(?:\r?\n|$))+/gm, (match) => {
+            const items = match.trim().split(/\r?\n/);
+            const listItems = items.map(item => `<li>${item.replace(/^[\*\-]\s+/, '')}</li>`).join('');
+            return `<ul>${listItems}</ul>`;
+        });
 
-        // 5. Restore code blocks
-        text = text.replace(/CODEBLOCK_\w+/g, (match) => {
+        // 5. Ordered Lists (1. )
+        // Match a block of lines starting with number.
+        formatted = formatted.replace(/^(?:\d+\.\s+.*(?:\r?\n|$))+/gm, (match) => {
+            const items = match.trim().split(/\r?\n/);
+            const listItems = items.map(item => `<li>${item.replace(/^\d+\.\s+/, '')}</li>`).join('');
+            return `<ol>${listItems}</ol>`;
+        });
+
+        // 6. Section "Simple words me:" styling
+        formatted = formatted.replace(/(Simple words me:)/gi, '<div class="simple-words-label">$1</div>');
+
+        // 7. Inline Code (`code`)
+        formatted = formatted.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+
+        // 8. Paragraphs & Newlines
+        // Wrap text that isn't a block element in <p>
+        formatted = formatted.split(/\n\n+/).map(block => {
+            if (block.trim().startsWith('<') || block.trim().startsWith('CODEBLOCK_')) {
+                return block;
+            }
+            return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+        }).join('');
+
+        // 9. Restore Code Blocks
+        formatted = formatted.replace(/CODEBLOCK_\w+/g, (match) => {
             const block = codeBlocks.get(match);
             if (!block) return match;
 
             const languageLabel = this.getLanguageLabel(block.lang);
             const codeId = 'code-' + Math.random().toString(36).substr(2, 9);
+            // Decode HTML entities for execution/display
+            const decodedCode = block.code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
             // Generate language options
             const commonLangs = ['Python', 'JavaScript', 'Java', 'C++', 'Go', 'Rust', 'PHP', 'HTML', 'CSS', 'SQL', 'Bash', 'JSON'];
@@ -760,7 +914,6 @@ class ChatApp {
                 `<option value="${l}" ${l.toLowerCase() === languageLabel.toLowerCase() ? 'selected' : ''}>${l}</option>`
             ).join('');
 
-            // Add detected language if unique
             if (!commonLangs.some(l => l.toLowerCase() === languageLabel.toLowerCase()) && languageLabel !== 'Code') {
                 options = `<option value="${languageLabel}" selected>${languageLabel}</option>` + options;
             }
@@ -781,12 +934,12 @@ class ChatApp {
                             <span class="copy-text">Copy code</span>
                         </button>
                     </div>
-                    <pre><code id="${codeId}" class="language-${block.lang}">${this.escapeHtml(block.code.trim())}</code></pre>
+                    <pre><code id="${codeId}" class="language-${block.lang}">${this.escapeHtml(decodedCode.trim())}</code></pre>
                 </div>
             `;
         });
 
-        return text;
+        return formatted;
     }
 
     async translateCode(codeId, targetLang) {
@@ -1050,6 +1203,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Navigation Handler
     new NavigationHandler();
+
+    // Initialize New Chat Button
+    const newChatBtn = document.getElementById('newChatBtn');
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', () => {
+            // Access text typing instance if needed to stop it
+            // Clear messages
+            const messagesDiv = document.getElementById('messages');
+            if (messagesDiv) messagesDiv.innerHTML = '';
+
+            // Show welcome screen
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            if (welcomeScreen) welcomeScreen.style.display = 'block';
+
+            // Reset input
+            const userInput = document.getElementById('userInput');
+            if (userInput) {
+                userInput.value = '';
+                userInput.style.height = 'auto';
+            }
+
+            // Optional: Reset any session ID or context on backend if required
+            console.log('🔄 Chat reset');
+        });
+    }
 
     console.log('🚀 Friction Enterprise AI - Initialized');
     console.log('✨ 3D Animations Active');

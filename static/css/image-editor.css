@@ -1,0 +1,102 @@
+/* ============================================
+   IMAGE EDITOR STYLING
+   Edit Tools & Controls
+   ============================================ */
+
+.edit-tool-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+    width: 100%;
+}
+
+.edit-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-cyan);
+    transform: translateX(3px);
+}
+
+.edit-tool-btn:active {
+    transform: translateX(1px);
+}
+
+.edit-tool-btn svg {
+    flex-shrink: 0;
+    stroke-width: 2;
+}
+
+/* Range sliders */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+    outline: none;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 242, 254, 0.4);
+    transition: all var(--transition-fast);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(0, 242, 254, 0.6);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 242, 254, 0.4);
+    transition: all var(--transition-fast);
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(0, 242, 254, 0.6);
+}
+
+/* Canvas container */
+#imageCanvas {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transition: all var(--transition-base);
+}
+
+/* Responsive editor */
+@media (max-width: 768px) {
+    .modal-content.glass-panel {
+        max-width: 95% !important;
+    }
+
+    .modal-content>div>div:first-child {
+        grid-template-columns: 1fr !important;
+    }
+
+    .edit-tool-btn {
+        font-size: 0.75rem;
+        padding: 6px 10px;
+    }
+}

@@ -29,13 +29,14 @@ def home():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Handle chat messages and return AI responses"""
+    """Handle chat messages and return AI responses (with optional image support)"""
     try:
         data = request.json
         user_message = data.get('message', '')
+        image_data = data.get('image', None)  # Base64 image data
         
-        if not user_message:
-            return jsonify({'error': 'Message is required'}), 400
+        if not user_message and not image_data:
+            return jsonify({'error': 'Message or image is required'}), 400
         
         if not GEMINI_API_KEY:
             return jsonify({'error': 'API key not configured. Please add GEMINI_API_KEY to .env file'}), 500
@@ -54,24 +55,30 @@ def chat():
     
     CORE IDENTITY:
     - Name: Friction AI
-    - Persona: Professional, precise, and code-focused. 
-    - Tone: Direct and efficient. Minimise conversational filler.
+    - Persona: Professional, precise, and educational.
+    - Tone: Structured, clear, and easy to understand.
     
-    RESPONSE GUIDELINES:
-    1. CODING TASKS:
-       - PRIORITIZE Code: When asked for code, provide the solution immediately in a code block.
-       - AVOID "Yapping": Do not add unnecessary intros like "Here is the code" or "Sure". Just give the code and a brief explanation if needed.
-       - STYLE: Use clean, Pythonic/Idiomatic code. Use comments for clarity.
-       - FORMAT: Always use markdown with language tags (e.g., ```python).
+    RESPONSE FORMATTING GUIDELINES (STRICT):
+    1. **Structure**:
+       - Use clearly defined sections with **Bold Headers**.
+       - Use **Numbered Lists** (1. 2. 3.) for main steps or points.
+       - Use **Bullet Points** (* or -) for details under main points.
     
-    2. GENERAL QUERIES:
-       - Be helpful and concise. Use Markdown (bold, lists) for readability.
+    2. **Explanation Style**:
+       - Start with a direct definition or answer.
+       - Use a "Simple words me:" section for complex topics.
+       - Break down long explanations into points.
     
-    3. IMAGE GENERATION:
-       - Guide users to the 'Generate Image' button for visual requests.
+    3. **Visuals**:
+       - Use Markdown for bolding key terms (e.g., **CPU**, **RAM**).
+       - Ensure good spacing between sections.
     
-    4. INTERACTION:
-       - Identify as "Friction AI" by Antigravity.
+    4. **CODING TASKS**:
+       - Provide code in markdown blocks with language tags.
+       - briefly explain the code after the block.
+
+    5. **Language**:
+       - If the user asks in Hinglish/Hindi, reply in the same language but keep technical terms in English.
     """
         
         errors = []
@@ -79,7 +86,29 @@ def chat():
             try:
                 print(f"🔄 Trying model: {model_name}")
                 model = genai.GenerativeModel(model_name, system_instruction=system_instruction)
-                response = model.generate_content(user_message)
+                
+                # If image is provided, process it
+                if image_data:
+                    # Import PIL for image processing
+                    from PIL import Image
+                    import io
+                    
+                    # Remove data URL prefix if present (data:image/png;base64,...)
+                    if ',' in image_data:
+                        image_data = image_data.split(',')[1]
+                    
+                    # Decode base64 image
+                    image_bytes = base64.b64decode(image_data)
+                    image = Image.open(io.BytesIO(image_bytes))
+                    
+                    # Generate content with image and text
+                    if user_message:
+                        response = model.generate_content([user_message, image])
+                    else:
+                        response = model.generate_content(["What is in this image? Describe it in detail.", image])
+                else:
+                    # Text-only message
+                    response = model.generate_content(user_message)
                 
                 print(f"✅ Success with model: {model_name}")
                 return jsonify({
@@ -91,6 +120,7 @@ def chat():
                 error_msg = str(model_error)
                 print(f"❌ Failed with {model_name}: {error_msg}")
                 errors.append(f"{model_name}: {error_msg}")
+
                 
                 # If rate limit (429), wait a bit before trying next
                 if "429" in error_msg:

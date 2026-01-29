@@ -1,7 +1,47 @@
+# Python
 __pycache__/
 *.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment Variables
 .env
+.env.local
+
+# Virtual Environment
 venv/
+env/
+ENV/
+
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Logs
 *.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test and Debug Files
+test_*.py
+debug_*.py
+check_models.py
+list_models_simple.py
+repro_error.py
+test_chat.ps1
+*_output.txt
+available_models.txt
+final_models.txt
+valid_models.txt
+models_output.txt
