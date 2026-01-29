@@ -273,9 +273,12 @@ def health():
         'api_configured': bool(GEMINI_API_KEY)
     })
 
+
 if __name__ == '__main__':
     print("🚀 Starting Friction AI Server...")
     print("📝 Make sure to add your GEMINI_API_KEY to the .env file")
     print("🌐 Server running on http://localhost:5000")
     print("✨ Image generation: Enhanced prompt engineering enabled")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Production mode - debug=False for deployment
+    app.run(debug=False, host='0.0.0.0', port=5000)
+
