@@ -1,0 +1,226 @@
+﻿
+/* ============================================
+   ENHANCED LOGO DESIGN - 3D EFFECTS
+   ============================================ */
+
+/* Logo container with 3D perspective */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+}
+
+/* Enhanced 3D logo cube */
+.logo-3d {
+    perspective: 1200px;
+    width: 60px;
+    height: 60px;
+    position: relative;
+}
+
+.logo-cube {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: rotateCubeEnhanced 12s linear infinite;
+    filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
+}
+
+@keyframes rotateCubeEnhanced {
+    0% {
+        transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    }
+    100% {
+        transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+    }
+}
+
+.cube-face {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: var(--primary-gradient);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.95;
+    box-shadow: 
+        inset 0 0 20px rgba(255, 255, 255, 0.2),
+        0 0 30px rgba(102, 126, 234, 0.4);
+    backdrop-filter: blur(5px);
+}
+
+.cube-face::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.2) 100%);
+    pointer-events: none;
+}
+
+.cube-face.front {
+    transform: translateZ(30px);
+}
+
+.cube-face.back {
+    transform: rotateY(180deg) translateZ(30px);
+}
+
+.cube-face.left {
+    transform: rotateY(-90deg) translateZ(30px);
+    background: var(--secondary-gradient);
+}
+
+.cube-face.right {
+    transform: rotateY(90deg) translateZ(30px);
+    background: var(--accent-gradient);
+}
+
+.cube-face.top {
+    transform: rotateX(90deg) translateZ(30px);
+    background: var(--success-gradient);
+}
+
+.cube-face.bottom {
+    transform: rotateX(-90deg) translateZ(30px);
+    background: var(--primary-gradient);
+}
+
+.cube-face svg {
+    width: 35px;
+    height: 35px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Enhanced logo text with 3D effect */
+.logo-text {
+    position: relative;
+}
+
+.logo-text h1 {
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #00f2fe 50%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: 2px;
+    position: relative;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(102, 126, 234, 0.5);
+    filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.6));
+}
+
+/* Individual letter animation */
+.logo-letter {
+    display: inline-block;
+    animation: letterFloat 3s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.1s);
+}
+
+.logo-letter:nth-child(1) { --i: 0; }
+.logo-letter:nth-child(2) { --i: 1; }
+.logo-letter:nth-child(3) { --i: 2; }
+.logo-letter:nth-child(4) { --i: 3; }
+.logo-letter:nth-child(5) { --i: 4; }
+
+@keyframes letterFloat {
+    0%, 100% {
+        transform: translateY(0) rotateY(0deg);
+    }
+    50% {
+        transform: translateY(-5px) rotateY(10deg);
+    }
+}
+
+.logo-subtitle {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subtitle-icon {
+    font-size: 10px;
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+/* Glow effect on hover */
+.logo:hover .logo-cube {
+    animation-duration: 6s;
+    filter: drop-shadow(0 0 30px rgba(102, 126, 234, 0.9));
+}
+
+.logo:hover .logo-text h1 {
+    filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.9));
+}
+
+/* Responsive logo */
+@media (max-width: 768px) {
+    .logo-3d {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .cube-face {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .cube-face.front {
+        transform: translateZ(22.5px);
+    }
+    
+    .cube-face.back {
+        transform: rotateY(180deg) translateZ(22.5px);
+    }
+    
+    .cube-face.left {
+        transform: rotateY(-90deg) translateZ(22.5px);
+    }
+    
+    .cube-face.right {
+        transform: rotateY(90deg) translateZ(22.5px);
+    }
+    
+    .cube-face.top {
+        transform: rotateX(90deg) translateZ(22.5px);
+    }
+    
+    .cube-face.bottom {
+        transform: rotateX(-90deg) translateZ(22.5px);
+    }
+    
+    .logo-text h1 {
+        font-size: 24px;
+    }
+    
+    .logo-subtitle {
+        font-size: 10px;
+    }
+}
