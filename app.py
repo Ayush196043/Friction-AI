@@ -9,7 +9,6 @@ import os
 from dotenv import load_dotenv
 import base64
 from io import BytesIO
-from models import get_best_model, DEFAULT_CHAT_MODEL, DEFAULT_IMAGE_MODEL, FALLBACK_MODEL
 
 # Load environment variables
 load_dotenv()
@@ -157,7 +156,7 @@ def generate_image():
             return jsonify({'error': 'API key not configured'}), 500
         
         # Use Gemini for professional prompt engineering
-        model = genai.GenerativeModel(DEFAULT_IMAGE_MODEL)
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
         # Enhanced prompt engineering
         enhanced_prompt = f"""You are an expert AI image generation prompt engineer.
@@ -243,7 +242,7 @@ def translate_code():
         if not GEMINI_API_KEY:
             return jsonify({'error': 'API key not configured'}), 500
             
-        model = genai.GenerativeModel(DEFAULT_CHAT_MODEL)
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
         prompt = f"""You are an expert code translator.
 translate the following code to {target_language}.
