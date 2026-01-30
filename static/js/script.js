@@ -947,10 +947,50 @@ class ChatApp {
         if (!codeElement) return;
 
         const originalCode = codeElement.textContent;
-        const currentLangClass = codeElement.className;
+        const codeContainer = codeElement.closest('.code-block-container');
 
-        // Show loading state
-        codeElement.style.opacity = '0.5';
+        // Create loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'code-translation-loading';
+        loadingOverlay.innerHTML = `
+            <div class="loading-spinner"></div>
+            <span>Translating to ${targetLang}...</span>
+        `;
+        loadingOverlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            border-radius: var(--radius-lg);
+            z-index: 10;
+        `;
+
+        const spinner = loadingOverlay.querySelector('.loading-spinner');
+        spinner.style.cssText = `
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 242, 254, 0.2);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        `;
+
+        const text = loadingOverlay.querySelector('span');
+        text.style.cssText = `
+            color: var(--accent-cyan);
+            font-size: 0.875rem;
+            font-weight: 600;
+        `;
+
+        codeContainer.style.position = 'relative';
+        codeContainer.appendChild(loadingOverlay);
 
         try {
             const response = await fetch('/api/translate-code', {
@@ -969,15 +1009,63 @@ class ChatApp {
                 codeElement.textContent = data.translated_code;
                 codeElement.className = `language-${targetLang.toLowerCase()}`;
                 hljs.highlightElement(codeElement);
+
+                // Show success message briefly
+                loadingOverlay.innerHTML = `
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" style="stroke-width: 2;">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    <span style="color: #22c55e; font-weight: 600;">Translated!</span>
+                `;
+                setTimeout(() => loadingOverlay.remove(), 1000);
             } else {
-                console.error('Translation failed:', data.error);
-                alert('Translation failed: ' + data.error);
+                // Show error inline
+                loadingOverlay.remove();
+
+                // Create error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'code-translation-error';
+                errorDiv.innerHTML = `
+                    <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); margin: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" style="stroke-width: 2;">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                            <strong style="color: #ef4444;">Translation Failed</strong>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">
+                            ${data.error || 'Unknown error occurred'}
+                        </p>
+                        ${data.suggestion ? `<p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem; margin-bottom: 0;">💡 ${data.suggestion}</p>` : ''}
+                        <button onclick="this.closest('.code-translation-error').remove()" style="margin-top: 0.5rem; padding: 0.25rem 0.75rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: var(--radius-sm); color: #ef4444; cursor: pointer; font-size: 0.75rem;">
+                            Dismiss
+                        </button>
+                    </div>
+                `;
+                codeContainer.appendChild(errorDiv);
+
+                // Auto-remove after 10 seconds
+                setTimeout(() => errorDiv.remove(), 10000);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error translating code');
-        } finally {
-            codeElement.style.opacity = '1';
+            loadingOverlay.remove();
+
+            // Show network error
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'code-translation-error';
+            errorDiv.innerHTML = `
+                <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); margin: 1rem;">
+                    <strong style="color: #ef4444;">Network Error</strong>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0.5rem 0 0 0;">
+                        Could not connect to server. Please check your connection.
+                    </p>
+                </div>
+            `;
+            codeContainer.appendChild(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
         }
     }
 

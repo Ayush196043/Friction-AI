@@ -101,8 +101,15 @@ def chat():
        - Provide code in markdown blocks with language tags.
        - briefly explain the code after the block.
 
-    5. **Language**:
-       - If the user asks in Hinglish/Hindi, reply in the same language but keep technical terms in English.
+    5. **LANGUAGE ADAPTATION (CRITICAL)**:
+       - **ALWAYS detect and match the user's language automatically**
+       - If user asks in Hindi/Hinglish → Reply in Hindi/Hinglish
+       - If user asks in Spanish → Reply in Spanish
+       - If user asks in French → Reply in French
+       - If user asks in any other language → Reply in that same language
+       - **Keep technical terms in English** (e.g., CPU, RAM, function, variable)
+       - **Natural language mixing is okay** (e.g., "Ye ek function hai jo...")
+       - If user switches language mid-conversation, switch with them
     """
         
         errors = []
@@ -255,38 +262,87 @@ Format clearly with markdown headers. Make it copy-paste ready for immediate use
 
 @app.route('/api/translate-code', methods=['POST'])
 def translate_code():
-    """Translate code to a different programming language"""
+    """Translate code to a different programming language with multiple model fallbacks"""
     try:
         data = request.json
         code = data.get('code', '')
         target_language = data.get('target_language', '')
         
         if not code or not target_language:
-            return jsonify({'error': 'Code and target language are required'}), 400
+            return jsonify({'error': 'Code and target language are required', 'success': False}), 400
         
         if not GEMINI_API_KEY:
-            return jsonify({'error': 'API key not configured'}), 500
-            
-        model = genai.GenerativeModel('gemini-2.0-flash')
+            return jsonify({'error': 'API key not configured', 'success': False}), 500
+        
+        # Try multiple models to avoid quota issues
+        models_to_try = [
+            'gemini-2.5-flash-lite',     # Lite = Higher quota
+            'gemini-2.0-flash',          # Stable fallback
+            'gemini-flash-latest',       # Generic alias
+        ]
         
         prompt = f"""You are an expert code translator.
-translate the following code to {target_language}.
-Return ONLY the translated code. Do not include markdown backticks, explanations, or any other text.
-Maintain the original logic and comments (translated if necessary).
+Translate the following code to {target_language}.
+Return ONLY the translated code without any markdown formatting, backticks, or explanations.
+Maintain the original logic and structure.
 
 Code to translate:
 {code}"""
         
-        response = model.generate_content(prompt)
+        errors = []
+        for model_name in models_to_try:
+            try:
+                print(f"🔄 Translating with model: {model_name}")
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                
+                # Clean the response - remove markdown code blocks if present
+                translated_code = response.text.strip()
+                
+                # Remove markdown code blocks
+                if translated_code.startswith('```'):
+                    lines = translated_code.split('\n')
+                    # Remove first line (```language) and last line (```)
+                    if len(lines) > 2 and lines[-1].strip() == '```':
+                        translated_code = '\n'.join(lines[1:-1])
+                    elif len(lines) > 1:
+                        # Just remove first line if last line isn't ```
+                        translated_code = '\n'.join(lines[1:])
+                
+                # Remove any remaining backticks at start/end
+                translated_code = translated_code.strip('`').strip()
+                
+                print(f"✅ Translation successful with {model_name}")
+                return jsonify({
+                    'translated_code': translated_code,
+                    'success': True,
+                    'model_used': model_name
+                })
+                
+            except Exception as model_error:
+                error_msg = str(model_error)
+                print(f"❌ Failed with {model_name}: {error_msg}")
+                errors.append(f"{model_name}: {error_msg}")
+                
+                # If quota exceeded, try next model immediately
+                if "429" in error_msg or "quota" in error_msg.lower():
+                    print(f"⏭️  Quota exceeded for {model_name}, trying next model...")
+                    continue
+                
+                # For other errors, also try next model
+                continue
         
+        # All models failed
         return jsonify({
-            'translated_code': response.text.strip(),
-            'success': True
-        })
+            'error': 'Translation temporarily unavailable due to API quota limits. Please wait a few seconds and try again.',
+            'success': False,
+            'details': errors[0] if errors else 'Unknown error',
+            'suggestion': 'The free API tier has rate limits. Please wait 30-60 seconds before translating again.'
+        }), 429
         
     except Exception as e:
         return jsonify({
-            'error': f'Error translating code: {str(e)}',
+            'error': f'Server error: {str(e)}',
             'success': False
         }), 500
 
