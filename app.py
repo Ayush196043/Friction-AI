@@ -66,12 +66,13 @@ def chat():
             return jsonify({'error': 'API key not configured. Please add GEMINI_API_KEY to .env file'}), 500
         
         # Try with multiple models to ensure success
-        # Prioritizing 2.0 Flash (Stable) and Lite models (High Quota)
+        # Prioritizing 1.5 Flash (Higher Free Quota) over 2.0 models
         models_to_try = [
-            'gemini-2.0-flash',          # Verified available, stable
-            'gemini-2.5-flash-lite',     # Lite model = Higher rate limits
+            'gemini-1.5-flash',          # BEST: Highest free tier quota
+            'gemini-1.5-flash-latest',   # Alias for 1.5 Flash
             'gemini-flash-latest',       # Generic alias fallback
-            'gemini-2.5-flash'           # Latest (try last due to low quota)
+            'gemini-1.5-pro',            # Pro model (if flash fails)
+            'gemini-2.0-flash-exp',      # Experimental 2.0 (higher quota than stable)
         ]
         
         # System instruction for the model
@@ -187,8 +188,8 @@ def generate_image():
         if not GEMINI_API_KEY:
             return jsonify({'error': 'API key not configured'}), 500
         
-        # Use Gemini for professional prompt engineering
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        # Use Gemini 1.5 Flash for better quota availability
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Enhanced prompt engineering
         enhanced_prompt = f"""You are an expert AI image generation prompt engineer.
@@ -275,10 +276,12 @@ def translate_code():
             return jsonify({'error': 'API key not configured', 'success': False}), 500
         
         # Try multiple models to avoid quota issues
+        # Prioritizing 1.5 Flash (Higher Free Quota)
         models_to_try = [
-            'gemini-2.5-flash-lite',     # Lite = Higher quota
-            'gemini-2.0-flash',          # Stable fallback
+            'gemini-1.5-flash',          # BEST: Highest free tier quota
+            'gemini-1.5-flash-latest',   # Alias for 1.5 Flash
             'gemini-flash-latest',       # Generic alias
+            'gemini-1.5-pro',            # Pro model fallback
         ]
         
         prompt = f"""You are an expert code translator.
