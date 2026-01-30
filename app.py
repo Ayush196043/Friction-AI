@@ -21,6 +21,31 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
+# Global error handlers to ensure JSON responses
+@app.errorhandler(404)
+def not_found(e):
+    """Handle 404 errors with JSON response"""
+    return jsonify({
+        'error': 'Endpoint not found',
+        'success': False
+    }), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    """Handle 500 errors with JSON response"""
+    return jsonify({
+        'error': f'Internal server error: {str(e)}',
+        'success': False
+    }), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle all uncaught exceptions with JSON response"""
+    return jsonify({
+        'error': f'An unexpected error occurred: {str(e)}',
+        'success': False
+    }), 500
+
 @app.route('/')
 def home():
     """Render the main chat interface"""
