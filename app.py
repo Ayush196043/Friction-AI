@@ -152,21 +152,23 @@ def chat():
                 error_msg = str(model_error)
                 print(f"❌ Failed with {model_name}: {error_msg}")
                 errors.append(f"{model_name}: {error_msg}")
-
                 
-                # If rate limit (429), wait a bit before trying next
-                if "429" in error_msg:
-                    print("⏳ Quota exceeded, waiting 4s before next model...")
-                    import time
-                    time.sleep(4)
+                # Instant fallback - no waiting!
+                # If quota exceeded (429) or any error, immediately try next model
+                if "429" in error_msg or "quota" in error_msg.lower():
+                    print(f"⚡ Quota exceeded for {model_name}, instantly switching to next model...")
+                else:
+                    print(f"⚡ Error with {model_name}, instantly trying next model...")
                 
                 continue
         
         # If all models failed
         return jsonify({
-            'error': f'All models failed. Primary reason: Quota Exceeded (429). Please wait 30s.. Details: {errors[0]}',
-            'success': False
-        }), 500
+            'error': 'All AI models are currently busy. Please try again in a few seconds.',
+            'success': False,
+            'technical_details': errors[0] if errors else 'Unknown error',
+            'suggestion': 'Wait 10-30 seconds and retry your request.'
+        }), 429
     
     except Exception as e:
         return jsonify({
@@ -327,12 +329,12 @@ Code to translate:
                 print(f"❌ Failed with {model_name}: {error_msg}")
                 errors.append(f"{model_name}: {error_msg}")
                 
-                # If quota exceeded, try next model immediately
+                # Instant fallback - no waiting!
                 if "429" in error_msg or "quota" in error_msg.lower():
-                    print(f"⏭️  Quota exceeded for {model_name}, trying next model...")
-                    continue
+                    print(f"⚡ Quota exceeded for {model_name}, instantly switching to next model...")
+                else:
+                    print(f"⚡ Error with {model_name}, instantly trying next model...")
                 
-                # For other errors, also try next model
                 continue
         
         # All models failed
