@@ -6,7 +6,10 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Database setup
-DATABASE = os.path.join(os.path.dirname(__file__), 'friction_ai.db')
+if os.environ.get('VERCEL'):
+    DATABASE = '/tmp/friction_ai.db'
+else:
+    DATABASE = os.path.join(os.path.dirname(__file__), 'friction_ai.db')
 
 def init_db():
     with sqlite3.connect(DATABASE) as conn:
