@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friction AI - Advanced Intelligence</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Highlight.js for code blocks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-bolt text-vibrant"></i>
+                    <span>Friction AI</span>
+                </div>
+                <button class="new-chat-btn" id="newChatBtn">
+                    <i class="fas fa-plus"></i> New Chat
+                </button>
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="chatSearch" placeholder="Search chats...">
+                </div>
+                <div class="sidebar-folders" id="sidebarFolders">
+                    <button class="folder-tab active" data-category="">All</button>
+                    <button class="folder-tab" data-category="General">General</button>
+                    <button class="folder-tab" data-category="Work">Work</button>
+                    <button class="folder-tab" data-category="Personal">Personal</button>
+                </div>
+            </div>
+            <div class="chat-history" id="chatHistory">
+                <!-- History items will be injected here -->
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar">U</div>
+                    <span>User</span>
+                </div>
+                <button class="settings-btn"><i class="fas fa-cog"></i></button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-content">
+            <header class="chat-header">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="current-model">
+                    <span class="status-dot"></span>
+                    <span>Friction v2.0</span>
+                </div>
+            </header>
+
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-screen" id="welcomeScreen">
+                    <h1>How can <span class="text-gradient">Friction AI</span> help you today?</h1>
+                    <div class="chips-container">
+                        <div class="prompt-chip" data-prompt="Write a Python script to scrape a website">
+                            <i class="fas fa-code"></i> Write Code
+                        </div>
+                        <div class="prompt-chip" data-prompt="Explain Quantum Physics in simple terms">
+                            <i class="fas fa-brain"></i> Explain Topics
+                        </div>
+                        <div class="prompt-chip" data-prompt="Help me write a professional email to my boss">
+                            <i class="fas fa-pen-nib"></i> Write Email
+                        </div>
+                        <div class="prompt-chip" data-prompt="Suggest some creative project ideas for portfolio">
+                            <i class="fas fa-lightbulb"></i> Project Ideas
+                        </div>
+                    </div>
+                </div>
+                <!-- Messages will be injected here -->
+            </div>
+
+            <div class="input-area">
+                <div class="input-container">
+                    <div class="attachment-tray" id="attachmentTray"></div>
+                    <div class="input-wrapper">
+                        <input type="file" id="fileInput" multiple hidden accept="image/*,.pdf,.txt">
+                        <div class="attachment-menu glass" id="attachmentMenu">
+                            <div class="attachment-item" id="uploadFileOption">
+                                <i class="fas fa-file-upload"></i>
+                                <span>Upload files</span>
+                            </div>
+                            <div class="attachment-item">
+                                <i class="fab fa-google-drive"></i>
+                                <span>Add from Drive</span>
+                            </div>
+                            <div class="attachment-item" id="photosOption">
+                                <i class="fas fa-image"></i>
+                                <span>Photos</span>
+                            </div>
+                            <div class="attachment-item" id="importCodeOption">
+                                <i class="fas fa-code"></i>
+                                <span>Import code</span>
+                            </div>
+                        </div>
+                        <button class="action-btn" id="attachBtn" title="Attach file"><i
+                                class="fas fa-paperclip"></i></button>
+                        <textarea id="userInput" placeholder="Ask Friction AI anything..." rows="1"></textarea>
+                        <button class="send-btn" id="sendBtn" title="Send message"><i
+                                class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <p class="disclaimer">Friction AI can make mistakes. Check important info.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2><i class="fas fa-cog"></i> Settings</h2>
+                <button class="close-modal" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>Intelligence Level</label>
+                    <div class="select-wrapper">
+                        <select id="modelSelect">
+                            <option value="gemini-flash-lite-latest">Friction Flash (Fast & Efficient)</option>
+                            <option value="gemini-pro-latest">Friction Pro (Deep & Complex)</option>
+                        </select>
+                    </div>
+                    <p class="setting-desc">Friction Pro is better for complex coding and logic.</p>
+                </div>
+                <div class="setting-group">
+                    <label>Conversation Style</label>
+                    <div class="skill-chips">
+                        <button class="skill-chip active" data-style="balanced">Balanced</button>
+                        <button class="skill-chip" data-style="creative">Creative</button>
+                        <button class="skill-chip" data-style="precise">Precise</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <p>Friction AI v2.1 | Premium Build</p>
+                <button class="save-btn" id="saveSettings">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

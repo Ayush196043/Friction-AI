@@ -1,0 +1,5 @@
+Status Code: 200
+Response: data: {"chunk": "Hello again"}
+Response: data: {"chunk": "! I see you said \"hi.\"\n\nIs there anything specific you're"}
+Response: data: {"chunk": " looking to do right now? Perhaps you have a question, need some code written, or want to brainstorm an idea? I'm ready when you are!"}
+Response: data: [DONE]
