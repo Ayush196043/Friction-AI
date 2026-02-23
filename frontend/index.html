@@ -111,6 +111,9 @@
                         </div>
                         <button class="action-btn" id="attachBtn" title="Attach file"><i
                                 class="fas fa-paperclip"></i></button>
+                        <button class="action-btn mic-btn" id="micBtn" title="Voice Input">
+                            <i class="fas fa-microphone"></i>
+                        </button>
                         <textarea id="userInput" placeholder="Ask Friction AI anything..." rows="1"></textarea>
                         <button class="send-btn" id="sendBtn" title="Send message"><i
                                 class="fas fa-paper-plane"></i></button>
@@ -145,6 +148,13 @@
                         <button class="skill-chip active" data-style="balanced">Balanced</button>
                         <button class="skill-chip" data-style="creative">Creative</button>
                         <button class="skill-chip" data-style="precise">Precise</button>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>Voice Feedback</label>
+                    <div class="toggle-container">
+                        <span>Auto-read AI Responses</span>
+                        <input type="checkbox" id="voiceToggle" class="custom-toggle">
                     </div>
                 </div>
             </div>

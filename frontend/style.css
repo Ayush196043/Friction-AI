@@ -104,6 +104,75 @@ body {
     background: rgba(255, 255, 255, 0.08);
 }
 
+.action-btn:hover {
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mic-btn.recording {
+    color: #ff4b4b;
+    background: rgba(255, 75, 75, 0.1);
+    animation: pulseMic 1.5s infinite;
+}
+
+@keyframes pulseMic {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.4);
+    }
+
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 10px rgba(255, 75, 75, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
+    }
+}
+
+.toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.custom-toggle {
+    appearance: none;
+    width: 44px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.custom-toggle:checked {
+    background: var(--accent);
+}
+
+.custom-toggle::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: 0.3s;
+}
+
+.custom-toggle:checked::before {
+    left: 23px;
+}
+
 .search-container i {
     color: var(--text-secondary);
     font-size: 0.9rem;

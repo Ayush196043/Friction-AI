@@ -14,8 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Settings State
     let settings = JSON.parse(localStorage.getItem('friction_settings')) || {
         model: 'gemini-flash-lite-latest',
-        style: 'balanced'
+        style: 'balanced',
+        voice: false
     };
+
+    const micBtn = document.getElementById('micBtn');
+    const voiceToggle = document.getElementById('voiceToggle');
 
     const settingsBtn = document.querySelector('.settings-btn');
     const settingsModal = document.getElementById('settingsModal');
@@ -26,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // UI Initialization
     modelSelect.value = settings.model;
+    if (voiceToggle) voiceToggle.checked = settings.voice;
     skillChips.forEach(chip => {
         if (chip.dataset.style === settings.style) chip.classList.add('active');
         else chip.classList.remove('active');
@@ -122,6 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const threadHistory = await fetch(`/api/history/${currentThreadId}`).then(res => res.json());
                     if (threadHistory.length === 1) {
                         generateAiTitle(currentThreadId);
+                    }
+                    if (settings.voice) {
+                        speak(fullText.replace(/[*#`]/g, ''));
                     }
                     renderHistory();
                     break;
@@ -487,9 +495,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     saveSettings.addEventListener('click', () => {
-        settings.model = modelSelect.value;
+        settings.model = modelSelect.value; // Use the value from the dropdown
         const activeChip = document.querySelector('.skill-chip.active');
         settings.style = activeChip ? activeChip.dataset.style : 'balanced';
+        settings.voice = voiceToggle.checked;
         localStorage.setItem('friction_settings', JSON.stringify(settings));
         settingsModal.classList.remove('open');
 
@@ -513,4 +522,62 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     renderHistory();
+
+    // Voice Assistance Logic (STT & TTS)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+            micBtn.classList.add('recording');
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            userInput.value = transcript;
+            userInput.style.height = 'auto';
+            userInput.style.height = userInput.scrollHeight + 'px';
+            handleSend();
+        };
+
+        recognition.onerror = () => {
+            micBtn.classList.remove('recording');
+        };
+
+        recognition.onend = () => {
+            micBtn.classList.remove('recording');
+        };
+
+        micBtn.addEventListener('click', () => {
+            if (micBtn.classList.contains('recording')) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+    } else {
+        if (micBtn) micBtn.style.display = 'none';
+    }
+
+    function speak(text) {
+        // Stop any current speech
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        // Try to find a nice female/premium voice
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Natural')) || voices[0];
+        if (preferredVoice) utterance.voice = preferredVoice;
+
+        window.speechSynthesis.speak(utterance);
+    }
 });
